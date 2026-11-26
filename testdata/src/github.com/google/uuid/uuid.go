@@ -1,7 +1,10 @@
 // Package uuid is a minimal stub of github.com/google/uuid for tests.
 package uuid
 
-import "hash"
+import (
+	"database/sql/driver"
+	"hash"
+)
 
 type UUID [16]byte
 
@@ -27,3 +30,6 @@ func (u UUID) String() string                   { return "" }
 func (u UUID) MarshalText() ([]byte, error)     { return nil, nil }
 func (u *UUID) UnmarshalText(b []byte) error    { return nil }
 func (u UUID) Version() Version                 { return 0 }
+
+func (u UUID) Value() (driver.Value, error)     { return nil, nil }
+func (u UUID) MarshalBinary() ([]byte, error)   { return nil, nil }

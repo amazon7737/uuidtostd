@@ -10,6 +10,6 @@ import (
 func TestAnalyzer(t *testing.T) {
 	analysistest.RunWithSuggestedFixes(t, analysistest.TestData(), uuidtostd.Analyzer,
 		"safe", "alias", "parseonly", "mainpkg",
-		"unsupported", "method", "exported", "gobuse", "errform", "addr", "oldversion", "multifile",
+		"unsupported", "method", "exported", "gobuse", "errform", "addr", "oldversion", "multifile", "iface",
 	)
 }

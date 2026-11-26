@@ -10,6 +10,7 @@ import (
 	"strconv"
 
 	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/refactor/satisfy"
 )
 
 const (
@@ -56,6 +57,15 @@ var methods = map[string]bool{
 	"UnmarshalText": true,
 }
 
+// stdMethods are the methods of the standard library UUID (value and pointer receivers).
+var stdMethods = map[string]bool{
+	"AppendText":    true,
+	"Compare":       true,
+	"MarshalText":   true,
+	"String":        true,
+	"UnmarshalText": true,
+}
+
 // stricter lists the identifiers whose standard library version rejects some inputs google/uuid accepts.
 var stricter = map[string]bool{
 	"Parse":     true,
@@ -70,6 +80,10 @@ type migration struct {
 
 func run(pass *analysis.Pass) (any, error) {
 	if pass.Pkg.Name() != "main" && exposesGoogleUUID(pass.Pkg) {
+		return nil, nil
+	}
+
+	if needsMissingMethods(pass) {
 		return nil, nil
 	}
 
@@ -312,6 +326,42 @@ func googleIdent(pass *analysis.Pass, sel *ast.SelectorExpr) string {
 	}
 
 	return sel.Sel.Name
+}
+
+// needsMissingMethods reports whether a google/uuid value is used as an interface
+// that requires a method the standard library UUID does not have, such as driver.Valuer or encoding.BinaryMarshaler.
+func needsMissingMethods(pass *analysis.Pass) bool {
+	var finder satisfy.Finder
+	finder.Find(pass.TypesInfo, pass.Files)
+
+	for constraint := range finder.Result {
+		if !isGoogleType(constraint.RHS) {
+			continue
+		}
+
+		iface, isIface := constraint.LHS.Underlying().(*types.Interface)
+		if !isIface {
+			continue
+		}
+
+		for i := range iface.NumMethods() {
+			if !stdMethods[iface.Method(i).Name()] {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func isGoogleType(t types.Type) bool {
+	if ptr, isPtr := t.(*types.Pointer); isPtr {
+		t = ptr.Elem()
+	}
+
+	named, isNamed := types.Unalias(t).(*types.Named)
+
+	return isNamed && named.Obj().Pkg() != nil && named.Obj().Pkg().Path() == googlePath
 }
 
 func hasGoogleImport(file *ast.File) bool {
