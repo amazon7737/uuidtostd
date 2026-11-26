@@ -1,0 +1,29 @@
+package safe
+
+import (
+	"fmt"
+
+	"uuid" // want `github.com/google/uuid can be replaced by the standard library package uuid`
+)
+
+type record struct {
+	id uuid.UUID
+}
+
+func generate() []uuid.UUID {
+	newID := uuid.NewV4
+	return []uuid.UUID{
+		uuid.NewV4(),
+		newID(),
+		uuid.NewV4(),
+		uuid.NewV7(),
+		uuid.Nil(),
+		uuid.Max(),
+		uuid.UUID{},
+	}
+}
+
+func text(r record) string {
+	b, _ := r.id.MarshalText()
+	return fmt.Sprint(uuid.NewV4().String(), r.id.String(), string(b))
+}

@@ -1,0 +1,5 @@
+package alias
+
+import guuid "uuid" // want `can be replaced by the standard library package uuid`
+
+func id() guuid.UUID { return guuid.NewV4() }

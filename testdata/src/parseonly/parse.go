@@ -1,0 +1,9 @@
+package parseonly
+
+import "github.com/google/uuid" // want `can be replaced by the standard library package uuid \(uuid.Parse and uuid.MustParse are stricter`
+
+func parse(s string) (uuid.UUID, error) { return uuid.Parse(s) }
+
+func mustParse(s string) uuid.UUID { return uuid.Must(uuid.Parse(s)) }
+
+func load(b []byte) (u uuid.UUID, err error) { return u, u.UnmarshalText(b) }

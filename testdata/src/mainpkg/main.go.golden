@@ -1,0 +1,7 @@
+package main
+
+import "uuid" // want `can be replaced by the standard library package uuid`
+
+func ID() uuid.UUID { return uuid.NewV4() }
+
+func main() { _ = ID() }
