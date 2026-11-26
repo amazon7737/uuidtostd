@@ -50,7 +50,7 @@ A package is skipped when:
 - it uses `uuid.NewRandom()` or `uuid.NewV7()` outside `uuid.Must()` (the standard functions don't return an error).
 - its exported API mentions a google/uuid type (except for `main` packages): changing it would break its importers.
 - a google/uuid value is used as an interface that needs a method the standard `UUID` does not have, such as `driver.Valuer` or `encoding.BinaryMarshaler`.
-- it imports `encoding/gob`: gob encodes google/uuid with `MarshalBinary`, and the standard `UUID` does not implement it.
+- it gives `encoding/gob` a value whose type contains a google/uuid type: gob encodes google/uuid with `MarshalBinary`, and the standard `UUID` does not implement it, so the encoded data would change.
 - it takes the address of `uuid.Nil` or `uuid.Max`, or assigns them.
 - the file Go version is lower than 1.27.
 

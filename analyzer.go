@@ -10,6 +10,7 @@ import (
 	"strconv"
 
 	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/types/typeutil"
 	"golang.org/x/tools/refactor/satisfy"
 )
 
@@ -83,7 +84,7 @@ func run(pass *analysis.Pass) (any, error) {
 		return nil, nil
 	}
 
-	if needsMissingMethods(pass) {
+	if needsMissingMethods(pass) || gobsGoogleUUID(pass) {
 		return nil, nil
 	}
 
@@ -135,11 +136,6 @@ func (m *migration) planFile(pass *analysis.Pass, file *ast.File) (ok, used bool
 		path, _ := strconv.Unquote(spec.Path.Value)
 
 		switch path {
-		case "encoding/gob":
-			// gob encodes google/uuid with MarshalBinary, which the standard library UUID does not have.
-			if hasGoogleImport(file) {
-				return false, false
-			}
 		case stdPath:
 			if hasGoogleImport(file) {
 				return false, false
@@ -346,6 +342,87 @@ func needsMissingMethods(pass *analysis.Pass) bool {
 
 		for i := range iface.NumMethods() {
 			if !stdMethods[iface.Method(i).Name()] {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+// gobsGoogleUUID reports whether a value whose type contains a google/uuid type is given to encoding/gob.
+// gob encodes google/uuid with MarshalBinary, which the standard library UUID does not have,
+// so the encoded data would change.
+func gobsGoogleUUID(pass *analysis.Pass) bool {
+	found := false
+
+	for _, file := range pass.Files {
+		ast.Inspect(file, func(n ast.Node) bool {
+			if found {
+				return false
+			}
+
+			call, isCall := n.(*ast.CallExpr)
+			if !isCall {
+				return true
+			}
+
+			fn, isFunc := typeutil.Callee(pass.TypesInfo, call).(*types.Func)
+			if !isFunc || fn.Pkg() == nil || fn.Pkg().Path() != "encoding/gob" {
+				return true
+			}
+
+			// The type behind a reflect.Value is unknown.
+			if fn.Name() == "EncodeValue" || fn.Name() == "DecodeValue" {
+				found = true
+				return false
+			}
+
+			for _, arg := range call.Args {
+				if containsGoogle(pass.TypesInfo.TypeOf(arg), map[types.Type]bool{}) {
+					found = true
+					return false
+				}
+			}
+
+			return true
+		})
+	}
+
+	return found
+}
+
+// containsGoogle reports whether a google/uuid type is part of t, as gob would see it.
+func containsGoogle(t types.Type, seen map[types.Type]bool) bool {
+	if t == nil || seen[t] {
+		return false
+	}
+
+	seen[t] = true
+
+	switch t := types.Unalias(t).(type) {
+	case *types.Named:
+		if isGoogleType(t) {
+			return true
+		}
+
+		return containsGoogle(t.Underlying(), seen)
+
+	case *types.Pointer:
+		return containsGoogle(t.Elem(), seen)
+
+	case *types.Slice:
+		return containsGoogle(t.Elem(), seen)
+
+	case *types.Array:
+		return containsGoogle(t.Elem(), seen)
+
+	case *types.Map:
+		return containsGoogle(t.Key(), seen) || containsGoogle(t.Elem(), seen)
+
+	case *types.Struct:
+		for field := range t.Fields() {
+			if field.Exported() && containsGoogle(field.Type(), seen) {
 				return true
 			}
 		}
