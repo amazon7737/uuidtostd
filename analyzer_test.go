@@ -9,7 +9,7 @@ import (
 
 func TestAnalyzer(t *testing.T) {
 	analysistest.RunWithSuggestedFixes(t, analysistest.TestData(), uuidtostd.Analyzer,
-		"safe", "alias", "parseonly", "mainpkg",
+		"safe", "alias", "parseonly", "mainpkg", "nostd", "middle", "aliasgroup",
 		"unsupported", "method", "exported", "gobuse", "errform", "addr", "oldversion", "multifile", "iface", "gobother", "gobstring",
 	)
 }

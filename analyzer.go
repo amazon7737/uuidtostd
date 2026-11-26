@@ -100,11 +100,7 @@ func run(pass *analysis.Pass) (any, error) {
 		}
 
 		if used {
-			m.edits[file] = append(m.edits[file], analysis.TextEdit{
-				Pos:     m.imports[file].Path.Pos(),
-				End:     m.imports[file].Path.End(),
-				NewText: []byte(strconv.Quote(stdPath)),
-			})
+			m.edits[file] = append(m.edits[file], importEdits(pass.Fset, file, m.imports[file])...)
 		}
 	}
 

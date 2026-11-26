@@ -3,7 +3,6 @@ package safe
 import (
 	"encoding"
 	"fmt"
-
 	"uuid" // want `github.com/google/uuid can be replaced by the standard library package uuid`
 )
 

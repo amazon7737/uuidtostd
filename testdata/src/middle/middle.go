@@ -1,0 +1,11 @@
+package middle
+
+import (
+	"fmt"
+
+	"github.com/google/uuid" // want `can be replaced by the standard library package uuid`
+
+	"example.com/lib"
+)
+
+func id() string { return fmt.Sprint(lib.Name, uuid.New()) }

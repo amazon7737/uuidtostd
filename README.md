@@ -39,6 +39,8 @@ Every input accepted by the standard library is accepted by google/uuid with the
 but google/uuid also accepts inputs like `(f81d4fae-7dec-11d0-a765-00a0c91e6bf6)` or `URN:UUID:...`.
 The report says so when the package uses them.
 
+The fix moves the import to the standard library group of the import declaration, or creates this group.
+
 ## When a package is skipped
 
 The standard `uuid.UUID` and `github.com/google/uuid.UUID` are different types,
@@ -56,6 +58,5 @@ A package is skipped when:
 
 ## Known limitations
 
-- The fixed import stays in its original import group, run `goimports` or `gci` after the fix.
 - Database drivers with their own type handling (pgx, ...) were not tested. `database/sql` works.
 - A value passed as `any` and checked at runtime (type assertion, reflection) is not detected: for example a library that looks for `encoding.BinaryMarshaler` on an `any` argument.

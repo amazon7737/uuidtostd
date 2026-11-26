@@ -3,7 +3,6 @@ package gobstring
 import (
 	"bytes"
 	"encoding/gob"
-
 	"uuid" // want `can be replaced by the standard library package uuid`
 )
 
